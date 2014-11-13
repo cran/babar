@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Comparing distributions with nested sampling</title>
+<link rel="stylesheet" media="all" href="http://jashkenas.github.io/docco/resources/linear/public/stylesheets/normalize.css" />
+<link rel="stylesheet" media="all" href="http://jashkenas.github.io/docco/resources/linear/docco.css" />
+<link href='http://yihui.name/media/css/docco-linear.css' rel='stylesheet' type='text/css'>
+<style type="text/css">
+img{display:block;margin:auto;}
+.container{width:auto;max-width:920px;}
+.page{width:auto;max-width:800px;}
+.page pre{width:100%;max-width:768px;}
+pre, code{font-size:90%;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/languages/r.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="http://yihui.name/media/js/center-images.js"></script>
+
+
+</head>
+
+<body>
+  <div class="container">
+    <div class="page">
+<!--
+%\VignetteEngine{knitr::docco_linear}
+%\VignetteIndexEntry{Comparing distributions with nested sampling}
+-->
+
+<h2>Comparing distributions with nested sampling</h2>
+
+<p>A common problem in the analysis of experimental data is deciding whether two sets of
+data samples represent the same underlying process (for example, when deciding whether
+a particular treatment has had an effect). One way to do this is by using a t-test. However,
+we can get use nested sampling to solve this problem instead. </p>
+
+<h3>Loading the package</h3>
+
+<p>Firstly, we load the package:</p>
+
+<pre><code class="r">library(babar)
+</code></pre>
+
+<h3>Setting conditions</h3>
+
+<p>Then, we&#39;ll generate some data. We&#39;ll set a number of samples:</p>
+
+<pre><code class="r">n.samples &lt;- 500
+</code></pre>
+
+<p>and set two different means (and a common standard deviation):</p>
+
+<pre><code class="r">sd.1 &lt;- 2
+mean.1 &lt;- 0
+
+sd.2 &lt;- 2
+mean.2 &lt;- 1
+</code></pre>
+
+<h3>Generating data</h3>
+
+<p>Now we&#39;ll generate three sets of samples. Two have the same mean and
+standard deviation and the third is different:</p>
+
+<pre><code class="r">data.a &lt;- rnorm(n.samples, mean.1, sd.1)
+data.b &lt;- rnorm(n.samples, mean.1, sd.1)
+data.c &lt;- rnorm(n.samples, mean.2, sd.2)
+</code></pre>
+
+<h3>Plotting the data</h3>
+
+<p>Let&#39;s look at the data:</p>
+
+<pre><code class="r">par(mfrow=c(1, 3))
+hist(data.a, col=&#39;blue&#39;)
+hist(data.b, col=&#39;green&#39;)
+hist(data.c, col=&#39;red&#39;)
+</code></pre>
+
+<p><img src="data:image/png;base64,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" alt="plot of chunk unnamed-chunk-5"/> </p>
+
+<h3>Comparing the data</h3>
+
+<p>Now we can use nested sampling. Here, we use a convenience function that will compare the
+evidence for the two models:</p>
+
+<ol>
+<li>The data samples are drawn from the same normal distribution (same mean and standard deviation).</li>
+<li>The data are from two different normal distributions (the mean and standard deviations).</li>
+</ol>
+
+<p>The function works by calculating the evidence for each model and returning the difference. Firstly,
+we can look at the evidence that the first two sets of samples are from the same distribution:</p>
+
+<pre><code class="r">compareDistributions(data.a, data.b)
+</code></pre>
+
+<pre><code>## [1] 5.313594
+</code></pre>
+
+<p>By the Jeffrey&#39;s scale, this is substantial evidence in favour. Comparing the first and third:</p>
+
+<pre><code class="r">compareDistributions(data.a, data.c)
+</code></pre>
+
+<pre><code>## [1] -17.56065
+</code></pre>
+
+<p>We see that the evidence is strongly against the two sets of samples being from the same distribution
+(the correct result, given that their means differ).</p>
+
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>
